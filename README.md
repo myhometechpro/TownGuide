@@ -1,6 +1,10 @@
 # Welcome to Heber-Overgaard
 
-A mobile-first, independent visitor guide for Heber-Overgaard, Arizona. Visitors can discover things to do, trails, food, lodging, events, deals, and local businesses after scanning tracked QR stickers. All included business/event content is explicitly marked **DEMO** until verified.
+A mobile-first, independent visitor guide for Heber-Overgaard, Arizona. Visitors can discover things to do, trails, food, lodging, events, deals, and local businesses after scanning tracked QR stickers. Public business and recreation listings are researched from current local and official sources; visitors should still verify time-sensitive details directly.
+
+## Listing sources
+
+Core business data was checked against the Heber-Overgaard Chamber of Commerce member directory and official business websites. Recreation data was checked against Navajo County, Visit Arizona, and the U.S. Forest Service Apache-Sitgreaves National Forests. Generic editorial photography is used until businesses provide licensed listing photos; it should not be interpreted as a photograph of a specific business.
 
 ## Stack
 
