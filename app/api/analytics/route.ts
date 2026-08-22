@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";import {getAdminSupabase} from "@/lib/supabase/admin";
+const allowed=new Set(["page_view","business_view","directions_click","phone_click","website_click","deal_view","deal_click","event_view","trail_view","attraction_view"]);
+export async function POST(req:Request){try{const body=await req.json();if(!allowed.has(body.eventType))return NextResponse.json({error:"Invalid event"},{status:400});const db=getAdminSupabase();if(db)await db.from("analytics_events").insert({event_type:body.eventType,entity_type:body.entityType||null,entity_id:body.entityId||null,qr_location_id:body.qrLocationId||null,metadata_json:body.metadata||{}});return NextResponse.json({ok:true})}catch{return NextResponse.json({ok:false},{status:202})}}

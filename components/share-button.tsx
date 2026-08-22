@@ -1,0 +1,2 @@
+"use client";import {Share2} from "lucide-react";import {useState} from "react";
+export function ShareButton(){const [label,setLabel]=useState("Share this guide");async function share(){if(navigator.share)await navigator.share({title:"Welcome to Heber-Overgaard",url:location.origin});else{await navigator.clipboard.writeText(location.origin);setLabel("Link copied!")}}return <button onClick={share} className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-full border-2 border-pine px-5 font-bold"><Share2 size={18}/>{label}</button>}
