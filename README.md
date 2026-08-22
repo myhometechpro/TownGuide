@@ -29,6 +29,8 @@ After signing in at `/admin`, open **Manage businesses**. Use **Import starter l
 
 The content manager also supports attractions/lakes/parks, trails, verified events, and incoming listing requests. Run **Import built-in recreation** once under Attractions to copy the initial attraction and trail records into Supabase.
 
+Run `supabase/migrations/002_content_images.sql` to create the public content-image bucket. Admin forms then accept JPG, PNG, WebP, and GIF uploads up to 5 MB for attractions, trails, and events.
+
 ## QR locations
 
 Create a row in `qr_locations` with a unique `code`, name, optional business, and active status. Its public URL is `/go/{code}`. The server verifies the code, records a minimal scan record (device category, referrer, user agent; no GPS or visitor name), and redirects home. Generate printable artwork under `/admin/qr`.
