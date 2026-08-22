@@ -29,6 +29,8 @@ After signing in at `/admin`, open **Manage businesses**. Use **Import starter l
 
 The content manager also supports attractions/lakes/parks, trails, verified events, and incoming listing requests. Run **Import built-in recreation** once under Attractions to copy the initial attraction and trail records into Supabase.
 
+Run `supabase/migrations/003_admin_security.sql` after creating the first administrator. It authorizes the oldest existing Supabase Auth user as the initial administrator, replaces broad authenticated-user policies with explicit admin-only RLS, and restricts content-image writes to administrators.
+
 Run `supabase/migrations/002_content_images.sql` to create the public content-image bucket. Admin forms then accept JPG, PNG, WebP, and GIF uploads up to 5 MB for attractions, trails, and events.
 
 ## QR locations

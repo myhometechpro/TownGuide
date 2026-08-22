@@ -1,0 +1,2 @@
+import {redirect} from "next/navigation";import {getSupabase} from "./server";
+export async function requireAdmin(){const db=await getSupabase();if(!db)redirect("/admin/login?error=configuration");const {data:{user}}=await db.auth.getUser();if(!user)redirect("/admin/login");const {data,error}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();if(error||!data){await db.auth.signOut();redirect("/admin/login?error=unauthorized")}return {db,user}}
