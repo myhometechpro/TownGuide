@@ -27,6 +27,8 @@ Create the first admin under Supabase Authentication → Users. Add the producti
 
 After signing in at `/admin`, open **Manage businesses**. Use **Import starter listings** once to copy the researched built-in directory into Supabase. From then on, additions, corrections, and published/hidden status can be managed there without editing code. Public business and lodging pages read from Supabase when it is configured and fall back to the built-in directory during local preview.
 
+The content manager also supports attractions/lakes/parks, trails, verified events, and incoming listing requests. Run **Import built-in recreation** once under Attractions to copy the initial attraction and trail records into Supabase.
+
 ## QR locations
 
 Create a row in `qr_locations` with a unique `code`, name, optional business, and active status. Its public URL is `/go/{code}`. The server verifies the code, records a minimal scan record (device category, referrer, user agent; no GPS or visitor name), and redirects home. Generate printable artwork under `/admin/qr`.
