@@ -8,7 +8,7 @@ Core business data was checked against the Heber-Overgaard Chamber of Commerce m
 
 ## Stack
 
-Next.js App Router, TypeScript, React, Tailwind CSS, Supabase Auth/PostgreSQL, and Netlify. The public preview works with typed local demo data; Supabase powers persistence, tracking, inquiries, authentication, and production analytics once configured.
+Next.js App Router, TypeScript, React, Tailwind CSS, Supabase Auth/PostgreSQL, and Netlify. The public guide uses researched local directory data; Supabase powers persistence, tracking, inquiries, authentication, and production analytics once configured.
 
 ## Local setup
 
@@ -37,7 +37,7 @@ For updates, merge tested changes to the connected production branch. Netlify wi
 
 ## Production checklist
 
-- Replace demo entries with verified content and images.
+- Continue verifying listings and replace generic editorial images with business-provided photography.
 - Add authoritative visitor-resource URLs only after verification.
 - Tighten admin authorization to an explicit claim/role.
 - Test QR scans, RLS, inquiry validation, mobile navigation, keyboard access, and external directions.
