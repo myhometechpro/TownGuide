@@ -1,0 +1,12 @@
+"use server";
+import {redirect} from "next/navigation";
+import {revalidatePath} from "next/cache";
+import {getSupabase} from "@/lib/supabase/server";
+import {businesses} from "@/lib/data";
+import {businessToRow} from "@/lib/businesses";
+
+function slugify(value:string){return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
+async function authenticatedDb(){const db=await getSupabase();if(!db)throw new Error("Supabase is not configured");const {data:{user}}=await db.auth.getUser();if(!user)redirect("/admin/login");return db}
+export async function saveBusiness(form:FormData){const db=await authenticatedDb();const id=String(form.get("id")||"");const name=String(form.get("name")||"").trim();if(!name)throw new Error("Business name is required");const row={name,slug:slugify(String(form.get("slug")||name)),category:String(form.get("category")||"Other"),phone:String(form.get("phone")||"").trim(),address:String(form.get("address")||"").trim(),website:String(form.get("website")||"").trim(),short_description:String(form.get("short_description")||"").trim(),description:String(form.get("description")||"").trim(),active:form.get("active")==="on",updated_at:new Date().toISOString()};const result=id?await db.from("businesses").update(row).eq("id",id):await db.from("businesses").insert(row);if(result.error)throw new Error(result.error.message);revalidatePath("/businesses");revalidatePath("/stay");revalidatePath("/admin/businesses");redirect("/admin/businesses?saved=1")}
+export async function toggleBusiness(form:FormData){const db=await authenticatedDb();const id=String(form.get("id"));const active=form.get("active")==="true";const {error}=await db.from("businesses").update({active,updated_at:new Date().toISOString()}).eq("id",id);if(error)throw new Error(error.message);revalidatePath("/businesses");revalidatePath("/admin/businesses")}
+export async function importStarterBusinesses(){const db=await authenticatedDb();const rows=businesses.map(b=>businessToRow(b));const {error}=await db.from("businesses").upsert(rows,{onConflict:"slug"});if(error)throw new Error(error.message);revalidatePath("/businesses");revalidatePath("/admin/businesses");redirect("/admin/businesses?imported=1")}
