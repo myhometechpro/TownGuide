@@ -1,0 +1,3 @@
+"use server";
+import {revalidatePath} from "next/cache";import {redirect} from "next/navigation";import {requireAdmin} from "@/lib/supabase/auth";
+export async function createBusinessQrLocations(){const {db}=await requireAdmin();const {data:businesses,error}=await db.from("businesses").select("id,name,slug").eq("active",true).order("name");if(error)throw new Error(error.message);const rows=(businesses||[]).map(b=>({code:`business-${b.slug}`,name:`${b.name} visitor sign`,business_id:b.id,location_description:`Business sign for ${b.name}`,active:true}));if(rows.length){const {error:upsertError}=await db.from("qr_locations").upsert(rows,{onConflict:"code"});if(upsertError)throw new Error(upsertError.message)}revalidatePath("/admin/qr");redirect("/admin/qr?created=1")}
