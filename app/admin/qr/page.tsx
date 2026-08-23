@@ -1,12 +1,13 @@
 import { QRGenerator } from "@/components/qr-generator";
 import { BusinessQrSigns } from "@/components/business-qr-signs";
+import { ResetQrScansButton } from "@/components/reset-qr-scans-button";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createBusinessQrLocations, saveCustomQrLocation } from "./actions";
+import { createBusinessQrLocations, resetAllQrScans, saveCustomQrLocation } from "./actions";
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; custom?: string }>;
+  searchParams: Promise<{ created?: string; custom?: string; reset?: string }>;
 }) {
   const { db } = await requireAdmin();
   const message = await searchParams;
@@ -45,10 +46,16 @@ export default async function Page({
         <form action={createBusinessQrLocations}>
           <button className="bg-pine px-5 py-3 font-bold text-cream">Create or refresh all business QR codes</button>
         </form>
+        <ResetQrScansButton action={resetAllQrScans} total={total} />
         <p className="text-lg font-bold">{total} total tracked scans</p>
       </div>
       {message.created && (
         <p className="mt-5 border border-forest/40 bg-forest/15 p-4 font-bold">Business QR locations are ready.</p>
+      )}
+      {message.reset && (
+        <p className="mt-5 border border-teal-300/40 bg-teal-900/30 p-4 font-bold text-teal-100">
+          All QR scan history has been reset. Active signs are now counting from zero.
+        </p>
       )}
       {signs.length ? (
         <BusinessQrSigns signs={signs} />
