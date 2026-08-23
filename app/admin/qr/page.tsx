@@ -1,2 +1,75 @@
-import {QRGenerator} from "@/components/qr-generator";import {BusinessQrSigns} from "@/components/business-qr-signs";import {requireAdmin} from "@/lib/supabase/auth";import {createBusinessQrLocations} from "./actions";
-export default async function Page({searchParams}:{searchParams:Promise<{created?:string}>}){const {db}=await requireAdmin();const [{data:businesses},{data:locations},message]=await Promise.all([db.from("businesses").select("id,name,slug").eq("active",true).order("name"),db.from("qr_locations").select("code,business_id,qr_scans(count)").eq("active",true),searchParams]);const byBusiness=new Map((locations||[]).map(x=>[x.business_id,{code:x.code,scans:x.qr_scans?.[0]?.count||0}]));const signs=(businesses||[]).filter(x=>byBusiness.has(x.id)).map(x=>({name:x.name,slug:x.slug,trackingCode:`HO-${x.id.replaceAll("-","").slice(0,6).toUpperCase()}`,...byBusiness.get(x.id)!})).sort((a,b)=>b.scans-a.scans);const total=signs.reduce((sum,x)=>sum+x.scans,0);return <section className="mx-auto max-w-6xl px-5 py-12"><p className="text-xs font-black uppercase tracking-[.2em] text-forest">Admin tools</p><h1 className="mt-2 font-display text-4xl">Business QR signs</h1><p className="mt-3 max-w-3xl text-ink/60">Every QR records which business location was scanned, then opens the main visitor guide.</p><div className="mt-6 flex flex-wrap items-center gap-4"><form action={createBusinessQrLocations}><button className="bg-pine px-5 py-3 font-bold text-cream">Create or refresh all business QR codes</button></form><p className="text-lg font-bold">{total} total tracked scans</p></div>{message.created&&<p className="mt-5 border border-forest/40 bg-forest/15 p-4 font-bold">Business QR locations are ready.</p>}{signs.length?<BusinessQrSigns signs={signs}/>:<p className="mt-8 bg-white p-6">No business signs have been created yet. Use the button above.</p>}<details className="mt-10 border border-cream/10 bg-white p-6"><summary className="cursor-pointer font-display text-2xl">Create a custom location QR</summary><div className="mt-6 max-w-2xl"><QRGenerator/></div></details></section>}
+import { QRGenerator } from "@/components/qr-generator";
+import { BusinessQrSigns } from "@/components/business-qr-signs";
+import { requireAdmin } from "@/lib/supabase/auth";
+import { createBusinessQrLocations, saveCustomQrLocation } from "./actions";
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string; custom?: string }>;
+}) {
+  const { db } = await requireAdmin();
+  const message = await searchParams;
+  const [{ data: businesses }, { data: locations }] = await Promise.all([
+    db.from("businesses").select("id,name,slug").eq("active", true).order("name"),
+    db.from("qr_locations").select("code,name,business_id,qr_scans(count)").eq("active", true),
+  ]);
+  const byBusiness = new Map(
+    (locations || [])
+      .filter((location) => location.business_id)
+      .map((location) => [
+        location.business_id,
+        { code: location.code, scans: location.qr_scans?.[0]?.count || 0 },
+      ]),
+  );
+  const signs = (businesses || [])
+    .filter((business) => byBusiness.has(business.id))
+    .map((business) => ({
+      name: business.name,
+      slug: business.slug,
+      trackingCode: `HO-${business.id.replaceAll("-", "").slice(0, 6).toUpperCase()}`,
+      ...byBusiness.get(business.id)!,
+    }))
+    .sort((a, b) => b.scans - a.scans);
+  const total = signs.reduce((sum, sign) => sum + sign.scans, 0);
+  const custom = (locations || []).find((location) => location.code === message.custom);
+
+  return (
+    <section className="mx-auto max-w-6xl px-5 py-12">
+      <p className="text-xs font-black uppercase tracking-[.2em] text-forest">Admin tools</p>
+      <h1 className="mt-2 font-display text-4xl">Business QR signs</h1>
+      <p className="mt-3 max-w-3xl text-ink/60">
+        Every QR records which business location was scanned, then opens the main visitor guide.
+      </p>
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <form action={createBusinessQrLocations}>
+          <button className="bg-pine px-5 py-3 font-bold text-cream">Create or refresh all business QR codes</button>
+        </form>
+        <p className="text-lg font-bold">{total} total tracked scans</p>
+      </div>
+      {message.created && (
+        <p className="mt-5 border border-forest/40 bg-forest/15 p-4 font-bold">Business QR locations are ready.</p>
+      )}
+      {signs.length ? (
+        <BusinessQrSigns signs={signs} />
+      ) : (
+        <p className="mt-8 bg-white p-6">No business signs have been created yet. Use the button above.</p>
+      )}
+      <details open={Boolean(custom)} className="mt-10 border border-cream/10 bg-white p-6">
+        <summary className="cursor-pointer font-display text-2xl">Create a custom location QR</summary>
+        <div className="mt-6 max-w-2xl">
+          {custom && (
+            <p className="mb-5 border border-forest/40 bg-forest/15 p-4 font-bold">
+              Tracked location saved. Your branded sign is ready below.
+            </p>
+          )}
+          <QRGenerator
+            action={saveCustomQrLocation}
+            initialCode={custom?.code}
+            initialName={custom?.name}
+          />
+        </div>
+      </details>
+    </section>
+  );
+}
