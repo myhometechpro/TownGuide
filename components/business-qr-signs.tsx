@@ -7,12 +7,11 @@ import JSZip from "jszip";
 type Sign={name:string;slug:string;code:string;trackingCode:string;scans:number};
 const safe=(value:string)=>value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 const filename=(sign:Sign)=>`heber-overgaard-sign-${sign.trackingCode.toLowerCase()}-${safe(sign.name)}.png`;
-const tableFilename=(sign:Sign)=>`heber-overgaard-table-card-4x6-${sign.trackingCode.toLowerCase()}-${safe(sign.name)}.png`;
 const csvCell=(value:string|number)=>`"${String(value).replaceAll('"','""')}"`;
 
 function crossReferenceCsv(signs:Sign[]){
-  const header=["tracking_code","business_name","qr_tracking_url","website_destination","sign_filename","table_card_4x6_filename","current_scans"];
-  const rows=signs.map(sign=>[sign.trackingCode,sign.name,`https://visitheberovergaard.com/go/${sign.code}`,"https://visitheberovergaard.com/",filename(sign),tableFilename(sign),sign.scans]);
+  const header=["tracking_code","business_name","qr_tracking_url","website_destination","sign_filename","tent_sheet_number","tent_position","current_scans"];
+  const rows=signs.map((sign,index)=>[sign.trackingCode,sign.name,`https://visitheberovergaard.com/go/${sign.code}`,"https://visitheberovergaard.com/",filename(sign),Math.floor(index/2)+1,index%2===0?"left":"right",sign.scans]);
   return [header,...rows].map(row=>row.map(csvCell).join(",")).join("\r\n");
 }
 
@@ -31,29 +30,14 @@ async function renderSign(sign:Sign){
   return canvas.toDataURL("image/png");
 }
 
-async function renderTableCard(sign:Sign){
-  const signUrl=await renderSign(sign),signImage=new Image();signImage.src=signUrl;
-  await new Promise<void>((resolve,reject)=>{signImage.onload=()=>resolve();signImage.onerror=()=>reject(new Error("Sign failed to render"))});
-  const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=1800;
-  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable");
-  ctx.fillStyle="#f1eadc";ctx.fillRect(0,0,1200,1800);
-  ctx.fillStyle="#123725";ctx.fillRect(0,0,1200,155);ctx.fillRect(0,1645,1200,155);
-  ctx.fillStyle="#f1eadc";ctx.font="800 34px Arial, sans-serif";ctx.textAlign="center";ctx.letterSpacing="4px";ctx.fillText("LOCAL VISITOR GUIDE",600,96);
-  ctx.shadowColor="rgba(12,35,24,.28)";ctx.shadowBlur=26;ctx.shadowOffsetY=10;ctx.drawImage(signImage,40,200,1120,1400);ctx.shadowColor="transparent";
-  ctx.fillStyle="#f1eadc";ctx.font="700 27px Arial, sans-serif";ctx.letterSpacing="2px";ctx.fillText(`SCAN • EXPLORE • ${sign.trackingCode}`,600,1738);
-  return canvas.toDataURL("image/png");
-}
-
 export function BusinessQrSigns({signs}:{signs:Sign[]}){
   const [busy,setBusy]=useState<string>();
   async function download(sign:Sign){setBusy(sign.code);try{const url=await renderSign(sign),a=document.createElement("a");a.href=url;a.download=filename(sign);a.click()}finally{setBusy(undefined)}}
-  async function downloadTableCard(sign:Sign){setBusy(`table-${sign.code}`);try{const url=await renderTableCard(sign),a=document.createElement("a");a.href=url;a.download=tableFilename(sign);a.click()}finally{setBusy(undefined)}}
   function downloadCsv(){saveBlob(new Blob([crossReferenceCsv(signs)],{type:"text/csv;charset=utf-8"}),"heber-overgaard-qr-sign-cross-reference.csv")}
   async function downloadAll(){setBusy("all");try{const zip=new JSZip();for(const sign of signs){const url=await renderSign(sign);zip.file(filename(sign),url.split(",")[1],{base64:true})}zip.file("heber-overgaard-qr-sign-cross-reference.csv",crossReferenceCsv(signs));saveBlob(await zip.generateAsync({type:"blob"}),"heber-overgaard-business-qr-signs.zip")}finally{setBusy(undefined)}}
-  async function downloadAllTableCards(){setBusy("table-all");try{const zip=new JSZip();for(const sign of signs){const url=await renderTableCard(sign);zip.file(tableFilename(sign),url.split(",")[1],{base64:true})}zip.file("heber-overgaard-qr-sign-cross-reference.csv",crossReferenceCsv(signs));saveBlob(await zip.generateAsync({type:"blob"}),"heber-overgaard-table-cards-4x6.zip")}finally{setBusy(undefined)}}
   return <>
-    <div className="mt-8 flex flex-wrap gap-3"><button onClick={downloadAll} disabled={!!busy} className="border border-cream/20 bg-white px-5 py-3 font-bold disabled:opacity-50">{busy==="all"?`Creating ${signs.length} signs…`:`Download all ${signs.length} signs + CSV (.zip)`}</button><button onClick={downloadAllTableCards} disabled={!!busy} className="bg-pine px-5 py-3 font-bold text-cream disabled:opacity-50">{busy==="table-all"?`Creating ${signs.length} table cards…`:`Download all 4×6 table cards + CSV (.zip)`}</button><button onClick={downloadCsv} disabled={!!busy} className="border border-cream/20 bg-white px-5 py-3 font-bold disabled:opacity-50">Download cross-reference CSV</button></div>
-    <p className="mt-3 text-xs text-ink/55">The 4×6 files are 1200×1800 pixels for printing at 300 DPI. Print at 100% or choose a 4×6 paper size.</p>
-    <div className="mt-5 grid gap-4 md:grid-cols-2">{signs.map(sign=><article className="border border-cream/10 bg-white p-5" key={sign.code}><p className="text-xs font-bold uppercase tracking-wider text-forest">Tracked business sign · {sign.trackingCode}</p><h2 className="mt-2 font-display text-xl">{sign.name}</h2><p className="mt-2 text-xs text-ink/55">visitheberovergaard.com/go/{sign.code}</p><p className="mt-3 text-2xl font-black text-forest">{sign.scans} <span className="text-sm font-bold text-ink/55">scans</span></p><div className="mt-5 flex flex-wrap gap-3"><button onClick={()=>download(sign)} disabled={!!busy} className="bg-pine px-4 py-3 font-bold text-cream disabled:opacity-50">{busy===sign.code?"Creating…":"Download sign"}</button><button onClick={()=>downloadTableCard(sign)} disabled={!!busy} className="border border-pine/30 px-4 py-3 font-bold disabled:opacity-50">{busy===`table-${sign.code}`?"Creating…":"Download 4×6 card"}</button><a href={`/go/${sign.code}`} target="_blank" className="border border-cream/20 px-4 py-3 font-bold">Test link</a></div></article>)}</div>
+    <div className="mt-8 flex flex-wrap gap-3"><button onClick={downloadAll} disabled={!!busy} className="border border-cream/20 bg-white px-5 py-3 font-bold disabled:opacity-50">{busy==="all"?`Creating ${signs.length} signs…`:`Download all ${signs.length} signs + CSV (.zip)`}</button><a href="/admin/qr/print" target="_blank" className="bg-pine px-5 py-3 font-bold text-cream">Open print-ready tent sheets</a><button onClick={downloadCsv} disabled={!!busy} className="border border-cream/20 bg-white px-5 py-3 font-bold disabled:opacity-50">Download cross-reference CSV</button></div>
+    <p className="mt-3 text-xs text-ink/55">Tent sheets place two tracked businesses on each 8.5×11-inch page with cut and fold guides.</p>
+    <div className="mt-5 grid gap-4 md:grid-cols-2">{signs.map(sign=><article className="border border-cream/10 bg-white p-5" key={sign.code}><p className="text-xs font-bold uppercase tracking-wider text-forest">Tracked business sign · {sign.trackingCode}</p><h2 className="mt-2 font-display text-xl">{sign.name}</h2><p className="mt-2 text-xs text-ink/55">visitheberovergaard.com/go/{sign.code}</p><p className="mt-3 text-2xl font-black text-forest">{sign.scans} <span className="text-sm font-bold text-ink/55">scans</span></p><div className="mt-5 flex flex-wrap gap-3"><button onClick={()=>download(sign)} disabled={!!busy} className="bg-pine px-4 py-3 font-bold text-cream disabled:opacity-50">{busy===sign.code?"Creating…":"Download sign"}</button><a href={`/go/${sign.code}`} target="_blank" className="border border-cream/20 px-4 py-3 font-bold">Test link</a></div></article>)}</div>
   </>;
 }
