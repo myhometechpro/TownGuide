@@ -32,7 +32,7 @@ export function AdvertisingRequestForm({ products }: { products: AdProduct[] }) 
   }
 
   if (state === "sent") return <div className="border border-forest/30 bg-white p-10 text-center"><h2 className="font-display text-3xl">Thank you for reaching out.</h2><p className="mt-3">Your advertising request was received. We sent you a confirmation email and will follow up after reviewing the campaign details.</p></div>;
-  if (state === "saved_no_email") return <div className="border border-amber-600/30 bg-white p-10 text-center"><h2 className="font-display text-3xl">Your request was saved.</h2><p className="mt-3">The email confirmation could not be delivered, but your campaign request is available for review in the Admin portal.</p></div>;
+  if (state === "saved_no_email") return <div className="border border-amber-600/30 bg-white p-10 text-center"><h2 className="font-display text-3xl">Your request was saved.</h2><p className="mt-3">The email confirmation could not be delivered, but your campaign request will be reviewed by the website Administrator.</p></div>;
 
   return <form onSubmit={submit} className="grid gap-5 border border-cream/10 bg-white p-6 shadow-soft md:grid-cols-2">
     <input type="text" name="company_fax" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/>

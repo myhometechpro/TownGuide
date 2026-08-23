@@ -9,7 +9,7 @@ function addDays(date:string,days:number){const value=new Date(`${date}T12:00:00
 function slugify(value:string){return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,70)||"advertising-lead"}
 
 async function sendEmail(message:{from:string;to:string[];subject:string;text:string;reply_to?:string}){
-  const key=process.env.RESEND_API_KEY;if(!key)return false;
+  const key=process.env.RESEND_API_KEY;if(!key){console.error("Advertising request email skipped: RESEND_API_KEY is not configured");return false}
   const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(message),cache:"no-store"});
   if(!response.ok){console.error("Advertising request email failed",response.status,await response.text());return false}return true;
 }
