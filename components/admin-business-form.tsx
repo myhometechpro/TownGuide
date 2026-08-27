@@ -10,8 +10,14 @@ export function AdminBusinessForm({business,inquiryId,action,connected=true,dele
     <label className="text-sm font-bold">Business name<input className={field} name="name" defaultValue={business?.name} required/></label>
     <label className="text-sm font-bold">URL name (slug)<input className={field} name="slug" defaultValue={business?.slug} placeholder="created-from-name-if-blank"/></label>
     <label className="text-sm font-bold">Category<select className={field} name="category" defaultValue={business?.category||"Other"}>{categories.map(x=><option key={x}>{x}</option>)}</select></label>
+    <label className="text-sm font-bold">Location type<select className={field} name="location_type" defaultValue={business?.locationType||"physical"}><option value="physical">Storefront / physical location</option><option value="service_area">Service area / remote</option><option value="online">Online</option></select></label>
+    <label className="text-sm font-bold">Lodging type (when applicable)<select className={field} name="lodging_type" defaultValue={business?.lodgingType||""}><option value="">Not lodging / unspecified</option>{["Cabins","Hotels","Vacation Rentals","RV","Camping"].map(x=><option key={x}>{x}</option>)}</select></label>
     <label className="text-sm font-bold">Phone<input className={field} name="phone" defaultValue={business?.phone}/></label>
+    <label className="text-sm font-bold">Public email<input className={field} type="email" name="email" defaultValue={business?.email}/></label>
     <label className="text-sm font-bold md:col-span-2">Address<input className={field} name="address" defaultValue={business?.address}/></label>
+    <label className="text-sm font-bold">Latitude (physical locations only)<input className={field} type="number" step="any" name="latitude" defaultValue={business?.latitude}/></label>
+    <label className="text-sm font-bold">Longitude (physical locations only)<input className={field} type="number" step="any" name="longitude" defaultValue={business?.longitude}/></label>
+    <p className="text-xs text-ink/55 md:col-span-2">Service-area and online businesses do not need an address or coordinates and will not receive a map pin.</p>
     <label className="text-sm font-bold md:col-span-2">Website<input className={field} type="url" name="website" defaultValue={business?.website}/></label>
     <fieldset className="grid gap-4 border border-forest/25 bg-forest/5 p-4 md:col-span-2 md:grid-cols-2">
       <legend className="px-2 font-bold">Operating hours</legend>
