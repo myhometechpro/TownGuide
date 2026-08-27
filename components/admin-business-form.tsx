@@ -3,7 +3,7 @@ import type {Business} from "@/types";
 
 const categories=["Restaurants","Coffee","Lodging","Shopping","Outdoor & Adventure","Automotive","Professional Services","Health & Wellness","Entertainment","Real Estate","Home Services","Other"];
 
-export function AdminBusinessForm({business,inquiryId,action,connected=true}:{business?:Partial<Business>;inquiryId?:string;action:(formData:FormData)=>void|Promise<void>;connected?:boolean}){
+export function AdminBusinessForm({business,inquiryId,action,connected=true,deleteControl}:{business?:Partial<Business>;inquiryId?:string;action:(formData:FormData)=>void|Promise<void>;connected?:boolean;deleteControl?:React.ReactNode}){
   const field="mt-2 h-12 w-full border border-cream/20 bg-[#202a24] px-3 text-cream",editing=Boolean(business?.id);
   return <form action={action} className="mt-8 grid gap-5 border border-cream/10 bg-white p-6 md:grid-cols-2">
     <input type="hidden" name="id" value={business?.id||""}/><input type="hidden" name="inquiry_id" value={inquiryId||""}/>
@@ -24,6 +24,6 @@ export function AdminBusinessForm({business,inquiryId,action,connected=true}:{bu
     <label className="text-sm font-bold md:col-span-2">Full description<textarea className="mt-2 min-h-32 w-full border border-cream/20 bg-[#202a24] p-3 text-cream" name="description" defaultValue={business?.description}/></label>
     <label className="flex items-center gap-3 text-sm font-bold"><input className="h-5 w-5" type="checkbox" name="active" defaultChecked={business?.active!==false}/>Published on directory</label>
     <label className="flex items-start gap-3 border border-forest/30 bg-forest/10 p-4 text-sm font-bold md:col-span-2"><input className="mt-0.5 h-5 w-5" type="checkbox" name="create_qr_sign" defaultChecked={!editing}/><span>Create a tracked QR sign after saving<span className="mt-1 block text-xs font-normal text-ink/60">Uses the official Heber-Overgaard sign template and opens it in QR tools for downloading.</span></span></label>
-    <div className="flex justify-end gap-3 md:col-span-2"><Link href={inquiryId?"/admin/inquiries":"/admin/businesses"} className="border border-cream/20 px-5 py-3 font-bold">Cancel</Link><button disabled={!connected} className="bg-pine px-5 py-3 font-bold text-cream disabled:cursor-not-allowed disabled:opacity-40">{editing?"Save changes":"Add business"}</button></div>
+    <div className="flex flex-wrap justify-end gap-3 md:col-span-2">{deleteControl}<Link href={inquiryId?"/admin/inquiries":"/admin/businesses"} className="border border-cream/20 px-5 py-3 font-bold">Cancel</Link><button disabled={!connected} className="bg-pine px-5 py-3 font-bold text-cream disabled:cursor-not-allowed disabled:opacity-40">{editing?"Save changes":"Add business"}</button></div>
   </form>
 }
