@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { updateInquiry } from "../content-actions";
+import { InquiryStatusForm } from "@/components/inquiry-status-form";
 
 const statusStyles: Record<string, string> = {
   new: "bg-sky-900/50 text-sky-100 border-sky-300/30",
@@ -33,13 +33,7 @@ export default async function Page() {
             <h2 className="mt-3 font-display text-2xl">{inquiry.business_name}</h2>
             <p className="mt-1 text-sm">{inquiry.interest} · {inquiry.contact_name} · <a href={`mailto:${inquiry.email}`}>{inquiry.email}</a></p>
           </div>
-          <form action={updateInquiry} className="flex items-center gap-2">
-            <input type="hidden" name="id" value={inquiry.id}/>
-            <select name="status" defaultValue={inquiry.status} className="h-11 border border-cream/20 px-3">
-              {["new", "reviewing", "resolved", "declined"].map((status) => <option value={status} key={status}>{status.replace("_", " ")}</option>)}
-            </select>
-            <button className="border border-cream/20 px-4 py-2 font-bold">Update</button>
-          </form>
+          <InquiryStatusForm id={inquiry.id} initialStatus={inquiry.status}/>
         </div>
         {inquiry.message && <p className="mt-5 border-t border-cream/10 pt-5 text-sm leading-6">{inquiry.message}</p>}
       </article>;

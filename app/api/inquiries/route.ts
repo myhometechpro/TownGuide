@@ -1,5 +1,6 @@
 import {NextResponse} from "next/server";
 import {getAdminSupabase} from "@/lib/supabase/admin";
+import {sendInquiryWebhook} from "@/lib/inquiry-webhook";
 
 type Inquiry={business_name:string;contact_name:string;phone:string;email:string;website:string;category:string;interest:string;message:string};
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -7,9 +8,9 @@ const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 async function sendEmail(message:{from:string;to:string[];subject:string;text:string;reply_to?:string}){
   const key=process.env.RESEND_API_KEY;
   if(!key)return false;
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(message),cache:"no-store"});
-  if(!response.ok){console.error("Inquiry email failed",response.status,await response.text());return false}
-  return true;
+  try{const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(message),cache:"no-store",signal:AbortSignal.timeout(8000)});
+  if(!response.ok){console.error("Inquiry email delivery failed",{status:response.status});return false}
+  return true}catch(error){console.error("Inquiry email delivery failed",{reason:error instanceof Error?error.name:"unknown_error"});return false}
 }
 
 async function sendInquiryEmails(inquiry:Inquiry){
@@ -29,8 +30,11 @@ export async function POST(req:Request){
     if(!b.business_name||!b.contact_name||!emailPattern.test(email)||email.length>254)return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
     const payload:Inquiry={business_name:String(b.business_name).trim().slice(0,200),contact_name:String(b.contact_name).trim().slice(0,200),phone:String(b.phone||"").trim().slice(0,50),email,website:String(b.website||"").trim().slice(0,500),category:String(b.category||"").trim().slice(0,100),interest:String(b.interest||"Other").trim().slice(0,100),message:String(b.message||"").trim().slice(0,3000)};
     const db=getAdminSupabase();if(!db)return NextResponse.json({error:"Contact storage is not configured"},{status:503});
-    const {error}=await db.from("business_inquiries").insert(payload);if(error)throw error;
-    const emailSent=await sendInquiryEmails(payload);
+    const {data:inquiry,error}=await db.from("business_inquiries").insert({...payload,status:"new"}).select("id,created_at").single();if(error||!inquiry)throw error||new Error("Inquiry was not returned after saving");
+    const [emailSent]=await Promise.all([
+      sendInquiryEmails(payload),
+      sendInquiryWebhook({inquiryId:inquiry.id,inquiryType:payload.interest||"Other",category:payload.category,name:payload.contact_name,businessName:payload.business_name,email:payload.email,phone:payload.phone,message:payload.message,submittedAt:inquiry.created_at,adminPath:"/admin/inquiries"}),
+    ]);
     return NextResponse.json({ok:true,emailSent});
   }catch(error){console.error("Unable to save inquiry",error);return NextResponse.json({error:"Unable to save inquiry"},{status:500})}
 }

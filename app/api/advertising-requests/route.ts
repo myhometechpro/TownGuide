@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminSupabase } from "@/lib/supabase/admin";
+import { sendInquiryWebhook } from "@/lib/inquiry-webhook";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -10,8 +11,8 @@ function slugify(value:string){return value.toLowerCase().normalize("NFKD").repl
 
 async function sendEmail(message:{from:string;to:string[];subject:string;text:string;reply_to?:string}){
   const key=process.env.RESEND_API_KEY;if(!key){console.error("Advertising request email skipped: RESEND_API_KEY is not configured");return false}
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(message),cache:"no-store"});
-  if(!response.ok){console.error("Advertising request email failed",response.status,await response.text());return false}return true;
+  try{const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify(message),cache:"no-store",signal:AbortSignal.timeout(8000)});
+  if(!response.ok){console.error("Advertising request email delivery failed",{status:response.status});return false}return true}catch(error){console.error("Advertising request email delivery failed",{reason:error instanceof Error?error.name:"unknown_error"});return false}
 }
 async function sendRequestEmails(r:Details){
   const owner=process.env.INQUIRY_TO_EMAIL||"myhometechpro1@gmail.com",from=process.env.INQUIRY_FROM_EMAIL||"Heber-Overgaard Visitor Guide <listings@visitheberovergaard.com>",term=`${r.days} days · $${(r.priceCents/100).toFixed(2)}`;
@@ -34,7 +35,11 @@ export async function POST(req:Request){
     if(!businessId){const slug=`${slugify(businessName)}-advertising-lead-${crypto.randomUUID().slice(0,8)}`;const {data:created,error}=await db.from("businesses").insert({name:businessName,slug,phone:phone||null,website:website||null,email,category:"Other",short_description:"Advertising inquiry — not published",description:"Private business lead created from a customer advertising request.",active:false}).select("id").single();if(error||!created)throw error||new Error("Unable to create business lead");businessId=created.id}
     const details:Details={businessName,contactName,email,phone,website,productName:product.name,days,priceCents,startDate,headline:requestedHeadline,message};
     const adCopy=["CUSTOMER ADVERTISING REQUEST",`Contact: ${contactName}`,`Email: ${email}`,`Phone: ${phone||"Not provided"}`,`Website: ${website||"Not provided"}`,`Requested service: ${product.name}`,`Requested term: ${days} days · $${(priceCents/100).toFixed(2)}`,"","Customer message:",message].join("\n");
-    const {error:campaignError}=await db.from("ad_campaigns").insert({business_id:businessId,product_id:product.id,headline:requestedHeadline||`Advertising request — ${businessName}`,ad_copy:adCopy,contact_name:contactName,contact_email:email,contact_phone:phone||null,destination_url:website||null,start_date:startDate,end_date:endDate,billing_price_cents:priceCents,booked_duration_days:days,pricing_term:pricingTerm,approved:false,paid:false,status:"draft"});if(campaignError)throw campaignError;
-    return NextResponse.json({ok:true,emailSent:await sendRequestEmails(details)});
+    const {data:campaign,error:campaignError}=await db.from("ad_campaigns").insert({business_id:businessId,product_id:product.id,headline:requestedHeadline||`Advertising request — ${businessName}`,ad_copy:adCopy,contact_name:contactName,contact_email:email,contact_phone:phone||null,destination_url:website||null,start_date:startDate,end_date:endDate,billing_price_cents:priceCents,booked_duration_days:days,pricing_term:pricingTerm,approved:false,paid:false,status:"draft"}).select("id,created_at").single();if(campaignError||!campaign)throw campaignError||new Error("Campaign was not returned after saving");
+    const [emailSent]=await Promise.all([
+      sendRequestEmails(details),
+      sendInquiryWebhook({inquiryId:campaign.id,inquiryType:"Advertising",category:product.name,name:contactName,businessName,email,phone,message,submittedAt:campaign.created_at,adminPath:`/admin/advertising/${campaign.id}`}),
+    ]);
+    return NextResponse.json({ok:true,emailSent});
   }catch(error){console.error("Unable to save advertising request",error);return NextResponse.json({error:"Unable to save advertising request"},{status:500})}
 }

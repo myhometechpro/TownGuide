@@ -17,7 +17,7 @@ Next.js App Router, TypeScript, React, Tailwind CSS, Supabase Auth/PostgreSQL, a
 3. Run `npm run dev` and open `http://localhost:3000`.
 4. Validate with `npm run typecheck` and `npm run build`.
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL` are browser-safe. `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be exposed in client code or committed.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL` are browser-safe. `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `ZAPIER_INQUIRY_WEBHOOK_URL` are server-only and must never be exposed in client code or committed.
 
 ## Supabase
 
@@ -39,7 +39,9 @@ Create a row in `qr_locations` with a unique `code`, name, optional business, an
 
 ## Netlify deployment
 
-Connect this GitHub repository in Netlify. `netlify.toml` supplies `npm run build`, `.next`, and Node 20. Add all four environment variables in the Netlify UI; use the production site URL for `NEXT_PUBLIC_SITE_URL`. Add that URL to Supabase allowed redirect URLs. Never expose the service-role key as a public variable.
+Connect this GitHub repository in Netlify. `netlify.toml` supplies `npm run build`, `.next`, and Node 20. Add the required environment variables in the Netlify UI; use the production site URL for `NEXT_PUBLIC_SITE_URL`. Add that URL to Supabase allowed redirect URLs. Never expose service-role, email, webhook, or payment secrets as public variables.
+
+To enable inquiry notifications, configure `RESEND_API_KEY`, `INQUIRY_TO_EMAIL`, and `INQUIRY_FROM_EMAIL`. Configure `ZAPIER_INQUIRY_WEBHOOK_URL` with a Zapier Catch Hook URL to send every saved listing and advertising inquiry to Zapier. Notification failures are logged without customer details and do not roll back or duplicate the saved request.
 
 For updates, merge tested changes to the connected production branch. Netlify will build automatically. Run migrations before deploying code that depends on schema changes.
 
