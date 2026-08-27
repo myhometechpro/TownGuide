@@ -1,15 +1,16 @@
 import {notFound} from "next/navigation";
 import {Clock,ExternalLink,MapPin,Phone} from "lucide-react";
-import {businesses,deals} from "@/lib/data";
+import {businesses} from "@/lib/data";
 import {getBusiness} from "@/lib/businesses";
 import {getLiveAds} from "@/lib/advertising";
 import {DealCard} from "@/components/cards";
 import {SponsoredPlacement} from "@/components/sponsored-placement";
+import {getDeals} from "@/lib/content";
 
 export function generateStaticParams(){return businesses.map(b=>({slug:b.slug}))}
 export default async function Page({params}:{params:Promise<{slug:string}>}){
   const {slug}=await params,b=await getBusiness(slug);if(!b)notFound();
-  const current=deals.filter(d=>d.businessId===b.id),enhanced=await getLiveAds("business_profile",b.id);
+  const [current,enhanced]=await Promise.all([getDeals().then(items=>items.filter(d=>d.businessId===b.id)),getLiveAds("business_profile",b.id)]);
   return <><section className="border-b border-cream/10 bg-pine"><div className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><p className="text-sm font-bold uppercase tracking-wider text-forest">{b.category} · Free directory listing</p><h1 className="mt-3 max-w-3xl font-display text-4xl text-cream md:text-6xl">{b.name}</h1></div></section>
   {enhanced.length>0&&<section className="mx-auto max-w-7xl px-5 pt-12 lg:px-8"><SponsoredPlacement campaign={enhanced[0]} variant="profile"/></section>}
   <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-[1.5fr_1fr] lg:px-8"><div><h2 className="font-display text-3xl">About</h2><p className="mt-5 text-lg leading-8 text-ink/70">{b.description}</p><div className="mt-8 flex flex-wrap gap-3">{b.phone&&<a href={`tel:${b.phone}`} className="inline-flex min-h-12 items-center gap-2 border border-cream/20 bg-pine px-5 font-bold text-cream"><Phone size={18}/> Call</a>}{b.website&&<a href={b.website} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 border border-cream/20 px-5 font-bold"><ExternalLink size={18}/> Website</a>}{b.address&&<a href={`https://maps.google.com/?q=${encodeURIComponent(b.address)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 border border-cream/20 px-5 font-bold"><MapPin size={18}/> Directions</a>}</div>{current.length>0&&<div className="mt-14"><h2 className="mb-5 font-display text-3xl">Current deals</h2>{current.map(x=><DealCard item={x} business={b} key={x.id}/>)}</div>}</div>

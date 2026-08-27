@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSupabase } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { InquiryStatusForm } from "@/components/inquiry-status-form";
+import { AdminListSearch } from "@/components/admin-list-search";
 
 const statusStyles: Record<string, string> = {
   new: "bg-sky-900/50 text-sky-100 border-sky-300/30",
@@ -10,17 +11,19 @@ const statusStyles: Record<string, string> = {
   declined: "bg-red-950/50 text-red-100 border-red-300/30",
 };
 
-export default async function Page() {
+export default async function Page({searchParams}:{searchParams:Promise<{q?:string}>}) {
   const db = await getSupabase();
   if (!db) redirect("/admin");
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect("/admin/login");
-  const { data = [] } = await db.from("business_inquiries").select("*").order("created_at", { ascending: false });
+  const [{ data:all = [] },params] = await Promise.all([db.from("business_inquiries").select("*").order("created_at", { ascending: false }),searchParams]);
+  const q=(params.q||"").trim().toLowerCase(),rows=all||[],data=q?rows.filter(inquiry=>`${inquiry.business_name} ${inquiry.contact_name} ${inquiry.email} ${inquiry.interest} ${inquiry.message||""}`.toLowerCase().includes(q)):rows;
 
   return <section className="mx-auto max-w-5xl px-5 py-12">
     <Link href="/admin" className="text-sm font-bold text-forest">← Dashboard</Link>
     <h1 className="mt-6 font-display text-4xl">Listing requests &amp; corrections</h1>
     <p className="mb-6 mt-3 text-ink/60">Set a request to Reviewing to open the business editor. Saving the business automatically resolves the request.</p>
+    <AdminListSearch value={params.q} placeholder="Search listing requests"/>
     {!data?.length ? <p className="bg-white p-8">No requests have arrived yet.</p> : <div className="space-y-4">{data.map((inquiry) => {
       const closed = inquiry.status === "resolved" || inquiry.status === "declined";
       return <article className="bg-white p-6" key={inquiry.id}>

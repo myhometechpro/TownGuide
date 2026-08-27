@@ -1,0 +1,3 @@
+"use client";
+
+export default function AdminError({reset}:{reset:()=>void}){return <section className="grid min-h-[60vh] place-items-center p-5"><div className="max-w-xl border border-red-400/30 bg-red-950/30 p-8 text-center"><h1 className="font-display text-3xl text-red-100">That change could not be completed.</h1><p className="mt-4 leading-7 text-red-100/80">No confirmation was recorded. Check the required fields and your connection, then try again. If the problem continues, return to the Admin dashboard before retrying.</p><button onClick={reset} className="mt-6 bg-pine px-6 py-3 font-bold text-cream">Try again</button></div></section>}
