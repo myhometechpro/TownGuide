@@ -1,8 +1,8 @@
 import { QRGenerator } from "@/components/qr-generator";
+import Link from "next/link";
 import { BusinessQrSigns } from "@/components/business-qr-signs";
-import { ResetQrScansButton } from "@/components/reset-qr-scans-button";
 import { requireAdmin } from "@/lib/supabase/auth";
-import { createBusinessQrLocations, resetAllQrScans, saveCustomQrLocation } from "./actions";
+import { createBusinessQrLocations, saveCustomQrLocation } from "./actions";
 
 export default async function Page({
   searchParams,
@@ -46,7 +46,7 @@ export default async function Page({
         <form action={createBusinessQrLocations}>
           <button className="bg-pine px-5 py-3 font-bold text-cream">Create or refresh all business QR codes</button>
         </form>
-        <ResetQrScansButton action={resetAllQrScans} total={total} />
+        <Link href="/admin/qr/reports" className="border border-cream/20 bg-white px-5 py-3 font-bold">Monthly scan reports</Link>
         <p className="text-lg font-bold">{total} total tracked scans</p>
       </div>
       {message.created && (

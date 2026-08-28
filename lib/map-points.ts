@@ -64,6 +64,15 @@ const businessCoordinates: Record<string, Coordinates> = {
   "mogollon-family-dentistry": { latitude: 34.422088, longitude: -110.5662892 },
   "overgaard-rv-resort": { latitude: 34.394044, longitude: -110.5537442 },
   "windy-hills-lavender-farm": { latitude: 34.4268883, longitude: -110.5857924 },
+  "amore-rim-salon": { latitude: 34.4220275, longitude: -110.5799495 },
+  "bolt-adventures-transport-containers": { latitude: 34.4063135, longitude: -110.5657302 },
+  "bryce-computers": { latitude: 34.4303375, longitude: -110.5983836 },
+  "canyon-rim-dental-heber": { latitude: 34.4274242, longitude: -110.5861092 },
+  "country-club-storage": { latitude: 34.3965487, longitude: -110.5511519 },
+  "golden-soul-massage-studio": { latitude: 34.3917584, longitude: -110.5266689 },
+  "lady-nays-boutique": { latitude: 34.4304802, longitude: -110.5990152 },
+  "overgaard-market": { latitude: 34.3912845, longitude: -110.5519455 },
+  "pots-plus": { latitude: 34.3927939, longitude: -110.5560117 },
 };
 
 const attractionCoordinates: Record<string, Coordinates> = {
