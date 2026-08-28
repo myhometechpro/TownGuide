@@ -4,3 +4,25 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Edge-enforced per-IP limits protect server functions and database-backed QR scans.
+# Netlify applies these after its automatic DDoS and firewall protections.
+[[redirects]]
+  from = "/api/*"
+  to = "/api/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 60
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
+
+[[redirects]]
+  from = "/go/*"
+  to = "/go/:splat"
+  status = 200
+  force = true
+  [redirects.rate_limit]
+    window_limit = 120
+    window_size = 60
+    aggregate_by = ["ip", "domain"]

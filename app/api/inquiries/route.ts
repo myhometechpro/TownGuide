@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {getAdminSupabase} from "@/lib/supabase/admin";
 import {sendInquiryWebhook} from "@/lib/inquiry-webhook";
+import {privateJson,rejectUnsafeJsonRequest} from "@/lib/request-security";
 
 type Inquiry={business_name:string;contact_name:string;phone:string;email:string;website:string;category:string;interest:string;message:string};
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,7 +26,9 @@ async function sendInquiryEmails(inquiry:Inquiry){
 
 export async function POST(req:Request){
   try{
+    const rejected=rejectUnsafeJsonRequest(req);if(rejected)return rejected;
     const b=await req.json();
+    if(String(b.company_fax||"").trim())return privateJson({ok:true,emailSent:true});
     const email=String(b.email||"").trim().toLowerCase();
     if(!b.business_name||!b.contact_name||!emailPattern.test(email)||email.length>254)return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
     const payload:Inquiry={business_name:String(b.business_name).trim().slice(0,200),contact_name:String(b.contact_name).trim().slice(0,200),phone:String(b.phone||"").trim().slice(0,50),email,website:String(b.website||"").trim().slice(0,500),category:String(b.category||"").trim().slice(0,100),interest:String(b.interest||"Other").trim().slice(0,100),message:String(b.message||"").trim().slice(0,3000)};
@@ -35,6 +38,6 @@ export async function POST(req:Request){
       sendInquiryEmails(payload),
       sendInquiryWebhook({inquiryId:inquiry.id,inquiryType:payload.interest||"Other",category:payload.category,name:payload.contact_name,businessName:payload.business_name,email:payload.email,phone:payload.phone,message:payload.message,submittedAt:inquiry.created_at,adminPath:"/admin/inquiries"}),
     ]);
-    return NextResponse.json({ok:true,emailSent});
+    return privateJson({ok:true,emailSent});
   }catch(error){console.error("Unable to save inquiry",error);return NextResponse.json({error:"Unable to save inquiry"},{status:500})}
 }

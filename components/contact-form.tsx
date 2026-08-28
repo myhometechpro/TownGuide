@@ -42,6 +42,7 @@ export function ContactForm(){
   if(state==="saved_no_email")return <div className="rounded-3xl border border-amber-600/30 bg-white p-10 text-center"><h2 className="font-display text-3xl">Your request was saved.</h2><p className="mt-3">The email confirmation could not be delivered. The site owner can still review your request in the Admin portal.</p></div>;
   const input="focus-ring mt-2 h-12 w-full rounded-xl border border-cream/20 px-3 font-normal";
   return <form onSubmit={submit} className="grid gap-5 rounded-3xl bg-white p-6 shadow-soft md:grid-cols-2">
+    <input type="text" name="company_fax" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/>
     <label className="text-sm font-bold">Business name<input name="business_name" required className={input}/></label>
     <label className="text-sm font-bold">Contact name<input name="contact_name" required className={input}/></label>
     <label className="text-sm font-bold">Phone<input name="phone" type="tel" className={input}/></label>

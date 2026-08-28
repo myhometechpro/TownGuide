@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { sendInquiryWebhook } from "@/lib/inquiry-webhook";
+import {privateJson,rejectUnsafeJsonRequest} from "@/lib/request-security";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,7 +25,8 @@ async function sendRequestEmails(r:Details){
 
 export async function POST(req:Request){
   try{
-    const b=await req.json();if(String(b.company_fax||"").trim())return NextResponse.json({ok:true,emailSent:true});
+    const rejected=rejectUnsafeJsonRequest(req);if(rejected)return rejected;
+    const b=await req.json();if(String(b.company_fax||"").trim())return privateJson({ok:true,emailSent:true});
     const businessName=String(b.business_name||"").trim().slice(0,200),contactName=String(b.contact_name||"").trim().slice(0,200),email=String(b.email||"").trim().toLowerCase().slice(0,254),productId=String(b.product_id||"").trim(),message=String(b.message||"").trim().slice(0,3000);
     if(!businessName||!contactName||!emailPattern.test(email)||!productId||!message)return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
     const db=getAdminSupabase();if(!db)return NextResponse.json({error:"Advertising requests are not configured"},{status:503});
@@ -40,6 +42,6 @@ export async function POST(req:Request){
       sendRequestEmails(details),
       sendInquiryWebhook({inquiryId:campaign.id,inquiryType:"Advertising",category:product.name,name:contactName,businessName,email,phone,message,submittedAt:campaign.created_at,adminPath:`/admin/advertising/${campaign.id}`}),
     ]);
-    return NextResponse.json({ok:true,emailSent});
+    return privateJson({ok:true,emailSent});
   }catch(error){console.error("Unable to save advertising request",error);return NextResponse.json({error:"Unable to save advertising request"},{status:500})}
 }
