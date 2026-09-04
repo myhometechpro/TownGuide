@@ -1,6 +1,34 @@
 @tailwind base;@tailwind components;@tailwind utilities;
 .town-map{position:relative;z-index:0;background:#dce7e1}.town-map .leaflet-control-container{font-family:var(--font-body)}.town-map-popup{color:#17241d}.town-map-popup-title{display:block;font-size:17px;line-height:1.25}.town-map-popup-meta{margin-top:3px;color:#276f76;font-size:11px;font-weight:800;text-transform:uppercase}.town-map-popup-address{color:#5f6a64;font-size:12px}.town-map-popup-link{display:inline-block;margin-top:8px;background:#17241d;padding:8px 10px;color:#f4efe5!important;font-weight:800;text-decoration:none}.town-map-ad-popup{overflow:hidden}.town-map-ad-badge{display:inline-block;margin-bottom:8px;background:#f0c84b;padding:4px 7px;color:#17241d;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.town-map-ad-headline{display:block;margin-top:8px;font-family:var(--font-display);font-size:19px;line-height:1.25}.town-map-ad-image{display:block;width:100%;height:120px!important;margin:0 0 10px;object-fit:cover}.leaflet-popup-content p{margin:6px 0;line-height:1.45}.town-map .leaflet-control-attribution{max-width:75%;font-size:8px;line-height:1.2}
 :root{color-scheme:dark}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#202a24;color:#e5ded2}.grain{background-color:#253029;background-image:linear-gradient(90deg,rgba(216,209,196,.025) 1px,transparent 1px),linear-gradient(rgba(216,209,196,.02) 1px,transparent 1px);background-size:32px 32px}.hero-overlay{background:linear-gradient(90deg,rgba(16,25,20,.94) 0%,rgba(16,25,20,.72) 48%,rgba(16,25,20,.24) 100%)}.rounded-3xl{border-radius:.55rem}.rounded-2xl{border-radius:.4rem}.bg-white{background-color:#303c34}.bg-cream{color:#17241d}.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{scrollbar-width:none}.focus-ring:focus-visible{outline:3px solid #9aa7a1;outline-offset:3px}input,select,textarea{background:#202a24;color:#e5ded2}
+
+/* Consistent pointer, touch, and keyboard feedback across the guide. */
+:where(a[href],button,summary,[role="button"],[role="switch"]){
+  cursor:pointer;
+  -webkit-tap-highlight-color:rgba(240,200,75,.32);
+  transition-property:color,background-color,border-color,box-shadow,filter,opacity,transform;
+  transition-duration:150ms;
+  transition-timing-function:ease-out;
+}
+@media(hover:hover){
+  :where(a[href],button,summary,[role="button"],[role="switch"]):not(:disabled):hover{
+    filter:brightness(1.16) saturate(1.12);
+  }
+}
+:where(a[href],button,summary,[role="button"],[role="switch"]):not(:disabled):active{
+  filter:brightness(.86) saturate(1.25);
+  outline:2px solid #f0c84b;
+  outline-offset:1px;
+  transform:translateY(1px) scale(.98);
+}
+:where(a[href],button,summary,input,select,textarea,[role="button"],[role="switch"]):focus-visible{
+  outline:3px solid #f0c84b;
+  outline-offset:3px;
+}
+button:disabled,[aria-disabled="true"]{cursor:not-allowed;filter:saturate(.35);opacity:.5}
 .admin-theme{min-height:100vh;background:#0b2930;color:#e8f4f3;background-image:linear-gradient(90deg,rgba(104,211,207,.025) 1px,transparent 1px),linear-gradient(rgba(104,211,207,.02) 1px,transparent 1px);background-size:32px 32px}.admin-portal-bar{border-color:rgba(116,218,214,.22);background:#071f26;box-shadow:0 8px 30px rgba(0,12,16,.28)}.admin-portal-icon{background:#0d6973;color:#c9fffb;box-shadow:inset 0 0 0 1px rgba(130,234,229,.28)}.admin-theme .bg-white{background-color:#123b43}.admin-theme .bg-pine{background-color:#0d6973}.admin-theme .text-forest{color:#67d3cf}.admin-theme .text-cream{color:#eef9f8}.admin-theme [class*="text-ink/"]{color:#a6c5c6}.admin-theme [class*="border-cream/"]{border-color:rgba(126,215,211,.24)}.admin-theme [class*="bg-forest/"]{background-color:rgba(61,177,176,.18)}.admin-theme [class*="bg-sand/"]{background-color:rgba(50,132,149,.22)}.admin-theme input,.admin-theme select,.admin-theme textarea{background:#08242b;color:#eef9f8;border-color:rgba(126,215,211,.3)}.admin-theme input::placeholder,.admin-theme textarea::placeholder{color:#7fa6a8}.admin-theme a:focus-visible,.admin-theme button:focus-visible,.admin-theme input:focus-visible,.admin-theme select:focus-visible,.admin-theme textarea:focus-visible{outline-color:#67d3cf}
+.admin-theme :where(a[href],button,summary,[role="button"],[role="switch"]){-webkit-tap-highlight-color:rgba(103,211,207,.35)}
+.admin-theme :where(a[href],button,summary,[role="button"],[role="switch"]):not(:disabled):active{outline-color:#67d3cf;filter:brightness(1.25) saturate(1.2)}
+@media(prefers-reduced-motion:reduce){:where(a[href],button,summary,[role="button"],[role="switch"]){transition-duration:0s}:where(a[href],button,summary,[role="button"],[role="switch"]):active{transform:none}}
 @media(max-width:767px){body{padding-bottom:76px}body:has(.admin-theme){padding-bottom:0}}
 @media print{body{background:#fff!important;color:#17241d!important;padding:0!important}body>header,body>footer,body>nav{display:none!important}.bg-white{background:#fff!important}.bg-pine{background:#17241d!important;color:#fff!important}.admin-theme{background:#fff!important;color:#17241d!important}.admin-portal-bar{display:none!important}}
