@@ -5,9 +5,9 @@ import type { AdProduct } from "@/lib/advertising";
 
 type State = "idle" | "sending" | "sent" | "saved_no_email" | "error";
 
-export function AdvertisingRequestForm({ products }: { products: AdProduct[] }) {
+export function AdvertisingRequestForm({ products, initialPlacement }: { products: AdProduct[]; initialPlacement?: string }) {
   const [state, setState] = useState<State>("idle");
-  const [productId, setProductId] = useState(products[0]?.id || "");
+  const [productId, setProductId] = useState(products.find(item => item.placement === initialPlacement)?.id || products[0]?.id || "");
   const [term, setTerm] = useState<"full" | "half">("full");
   const product = useMemo(() => products.find((item) => item.id === productId), [products, productId]);
   const price = term === "half" ? product?.half_price_cents : product?.price_cents;
