@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { sendInquiryWebhook } from "@/lib/inquiry-webhook";
 import {privateJson,rejectUnsafeJsonRequest} from "@/lib/request-security";
+import {ADVERTISING_AGREEMENT_VERSION,deliverAdvertisingAgreement} from "@/lib/advertising-agreement";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type Details = { businessName:string;contactName:string;email:string;phone:string;website:string;productName:string;days:number;priceCents:number;startDate:string;headline:string;message:string };
 
 function addDays(date:string,days:number){const value=new Date(`${date}T12:00:00Z`);value.setUTCDate(value.getUTCDate()+days);return value.toISOString().slice(0,10)}
@@ -27,9 +29,11 @@ export async function POST(req:Request){
   try{
     const rejected=rejectUnsafeJsonRequest(req);if(rejected)return rejected;
     const b=await req.json();if(String(b.company_fax||"").trim())return privateJson({ok:true,emailSent:true});
-    const businessName=String(b.business_name||"").trim().slice(0,200),contactName=String(b.contact_name||"").trim().slice(0,200),email=String(b.email||"").trim().toLowerCase().slice(0,254),productId=String(b.product_id||"").trim(),message=String(b.message||"").trim().slice(0,3000);
-    if(!businessName||!contactName||!emailPattern.test(email)||!productId||!message)return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
+    const businessName=String(b.business_name||"").trim().slice(0,200),contactName=String(b.contact_name||"").trim().slice(0,200),email=String(b.email||"").trim().toLowerCase().slice(0,254),productId=String(b.product_id||"").trim(),message=String(b.message||"").trim().slice(0,3000),submissionId=String(b.submission_id||"").trim();
+    if(!businessName||!contactName||!emailPattern.test(email)||!productId||!message||b.agreement_accepted!=="yes"||!uuidPattern.test(submissionId))return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
     const db=getAdminSupabase();if(!db)return NextResponse.json({error:"Advertising requests are not configured"},{status:503});
+    const {data:prior}=await db.from("ad_campaigns").select("id").eq("onboarding_request_id",submissionId).maybeSingle();
+    if(prior)return privateJson({ok:true,emailSent:true,duplicate:true});
     const {data:product,error:productError}=await db.from("ad_products").select("id,name,price_cents,half_price_cents,duration_days").eq("id",productId).eq("active",true).maybeSingle();
     if(productError||!product)return NextResponse.json({error:"The selected advertising service is unavailable"},{status:400});
     const pricingTerm=b.pricing_term==="half"?"half":"full",days=pricingTerm==="half"?14:product.duration_days,priceCents=pricingTerm==="half"?product.half_price_cents:product.price_cents,today=new Date().toISOString().slice(0,10),requestedStart=String(b.start_date||"").trim(),startDate=datePattern.test(requestedStart)&&requestedStart>=today?requestedStart:today,endDate=addDays(startDate,Math.max(1,days)-1),phone=String(b.phone||"").trim().slice(0,50),website=String(b.website||"").trim().slice(0,500),requestedHeadline=String(b.headline||"").trim().slice(0,90);
@@ -37,11 +41,13 @@ export async function POST(req:Request){
     if(!businessId){const slug=`${slugify(businessName)}-advertising-lead-${crypto.randomUUID().slice(0,8)}`;const {data:created,error}=await db.from("businesses").insert({name:businessName,slug,phone:phone||null,website:website||null,email,category:"Other",short_description:"Advertising inquiry — not published",description:"Private business lead created from a customer advertising request.",active:false}).select("id").single();if(error||!created)throw error||new Error("Unable to create business lead");businessId=created.id}
     const details:Details={businessName,contactName,email,phone,website,productName:product.name,days,priceCents,startDate,headline:requestedHeadline,message};
     const adCopy=["CUSTOMER ADVERTISING REQUEST",`Contact: ${contactName}`,`Email: ${email}`,`Phone: ${phone||"Not provided"}`,`Website: ${website||"Not provided"}`,`Requested service: ${product.name}`,`Requested term: ${days} days · $${(priceCents/100).toFixed(2)}`,"","Customer message:",message].join("\n");
-    const {data:campaign,error:campaignError}=await db.from("ad_campaigns").insert({business_id:businessId,product_id:product.id,headline:requestedHeadline||`Advertising request — ${businessName}`,ad_copy:adCopy,contact_name:contactName,contact_email:email,contact_phone:phone||null,destination_url:website||null,start_date:startDate,end_date:endDate,billing_price_cents:priceCents,booked_duration_days:days,pricing_term:pricingTerm,approved:false,paid:false,status:"draft"}).select("id,created_at").single();if(campaignError||!campaign)throw campaignError||new Error("Campaign was not returned after saving");
-    const [emailSent]=await Promise.all([
+    const acceptedAt=new Date().toISOString();
+    const {data:campaign,error:campaignError}=await db.from("ad_campaigns").insert({business_id:businessId,product_id:product.id,headline:requestedHeadline||`Advertising request — ${businessName}`,ad_copy:adCopy,contact_name:contactName,contact_email:email,contact_phone:phone||null,destination_url:website||null,start_date:startDate,end_date:endDate,billing_price_cents:priceCents,booked_duration_days:days,pricing_term:pricingTerm,approved:false,paid:false,status:"draft",agreement_version:ADVERTISING_AGREEMENT_VERSION,agreement_accepted_at:acceptedAt,onboarding_request_id:submissionId}).select("id,created_at,contact_email,contact_name,start_date,booked_duration_days,businesses(name)").single();if(campaignError?.code==="23505")return privateJson({ok:true,emailSent:true,duplicate:true});if(campaignError||!campaign)throw campaignError||new Error("Campaign was not returned after saving");
+    const [emailSent,,agreementDelivery]=await Promise.all([
       sendRequestEmails(details),
       sendInquiryWebhook({inquiryId:campaign.id,inquiryType:"Advertising",category:product.name,name:contactName,businessName,email,phone,message,submittedAt:campaign.created_at,adminPath:`/admin/advertising/${campaign.id}`}),
+      deliverAdvertisingAgreement(db,campaign),
     ]);
-    return privateJson({ok:true,emailSent});
+    return privateJson({ok:true,emailSent,agreementEmailSent:agreementDelivery.ok});
   }catch(error){console.error("Unable to save advertising request",error);return NextResponse.json({error:"Unable to save advertising request"},{status:500})}
 }

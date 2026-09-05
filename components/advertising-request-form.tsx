@@ -13,6 +13,7 @@ export function AdvertisingRequestForm({ products }: { products: AdProduct[] }) 
   const price = term === "half" ? product?.half_price_cents : product?.price_cents;
   const days = term === "half" ? 14 : product?.duration_days;
   const input = "focus-ring mt-2 h-12 w-full border border-cream/20 bg-white px-3 font-normal";
+  const [submissionId] = useState(() => crypto.randomUUID());
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +36,7 @@ export function AdvertisingRequestForm({ products }: { products: AdProduct[] }) 
   if (state === "saved_no_email") return <div className="border border-amber-600/30 bg-white p-10 text-center"><h2 className="font-display text-3xl">Your request was saved.</h2><p className="mt-3">The email confirmation could not be delivered, but your campaign request will be reviewed by the website Administrator.</p></div>;
 
   return <form onSubmit={submit} className="grid gap-5 border border-cream/10 bg-white p-6 shadow-soft md:grid-cols-2">
+    <input type="hidden" name="submission_id" value={submissionId}/>
     <input type="text" name="company_fax" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/>
     <label className="text-sm font-bold">Business name<input name="business_name" required maxLength={200} className={input}/></label>
     <label className="text-sm font-bold">Contact name<input name="contact_name" required maxLength={200} className={input}/></label>
@@ -47,6 +49,7 @@ export function AdvertisingRequestForm({ products }: { products: AdProduct[] }) 
     <label className="text-sm font-bold">Preferred start date<input name="start_date" type="date" className={input}/></label>
     <label className="text-sm font-bold">Campaign headline or offer<input name="headline" maxLength={90} className={input} placeholder="Optional—we can help write it"/></label>
     <label className="text-sm font-bold md:col-span-2">What would you like to advertise?<textarea name="message" required maxLength={3000} rows={6} className="mt-2 w-full border border-cream/20 bg-white p-3 font-normal" placeholder="Tell us about the promotion, message, photos, or destination you have in mind."/></label>
+    <label className="flex items-start gap-3 border border-forest/20 bg-forest/5 p-4 text-sm leading-6 md:col-span-2"><input name="agreement_accepted" value="yes" type="checkbox" required className="mt-1 size-5 shrink-0"/><span>I have read and agree to the <a href="/advertising-terms" target="_blank" rel="noreferrer" className="font-bold text-forest underline">Advertising Terms/Agreement</a>, last updated September 5, 2026. A complete copy will be emailed to me.</span></label>
     <div className="md:col-span-2"><button disabled={state === "sending" || products.length === 0} className="min-h-13 bg-pine px-7 py-4 font-bold text-cream disabled:opacity-50">{state === "sending" ? "Sending request…" : "Request advertising"}</button>{state === "error" && <p role="alert" className="mt-3 text-sm font-bold text-red-600">We couldn&apos;t save that request. Please check the form and try again.</p>}</div>
   </form>;
 }
