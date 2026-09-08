@@ -32,7 +32,8 @@ export async function POST(req:Request){
     const businessName=String(b.business_name||"").trim().slice(0,200),contactName=String(b.contact_name||"").trim().slice(0,200),email=String(b.email||"").trim().toLowerCase().slice(0,254),productId=String(b.product_id||"").trim(),message=String(b.message||"").trim().slice(0,3000),submissionId=String(b.submission_id||"").trim();
     if(!businessName||!contactName||!emailPattern.test(email)||!productId||!message||b.agreement_accepted!=="yes"||!uuidPattern.test(submissionId))return NextResponse.json({error:"Missing or invalid required fields"},{status:400});
     const db=getAdminSupabase();if(!db)return NextResponse.json({error:"Advertising requests are not configured"},{status:503});
-    const {data:prior}=await db.from("ad_campaigns").select("id").eq("onboarding_request_id",submissionId).maybeSingle();
+    const {data:prior,error:priorError}=await db.from("ad_campaigns").select("id").eq("onboarding_request_id",submissionId).maybeSingle();
+    if(priorError){console.error("Advertising request schema check failed",{code:priorError.code});return NextResponse.json({error:"Advertising requests are temporarily unavailable. The site administrator has been notified."},{status:503})}
     if(prior)return privateJson({ok:true,emailSent:true,duplicate:true});
     const {data:product,error:productError}=await db.from("ad_products").select("id,name,price_cents,half_price_cents,duration_days").eq("id",productId).eq("active",true).maybeSingle();
     if(productError||!product)return NextResponse.json({error:"The selected advertising service is unavailable"},{status:400});
