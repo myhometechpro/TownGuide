@@ -27,6 +27,9 @@ create index if not exists advertising_agreement_deliveries_campaign_idx
   on public.advertising_agreement_deliveries(campaign_id,created_at desc);
 
 alter table public.advertising_agreement_deliveries enable row level security;
+drop policy if exists "admins read agreement deliveries" on public.advertising_agreement_deliveries;
+drop policy if exists "admins insert agreement deliveries" on public.advertising_agreement_deliveries;
+drop policy if exists "admins update agreement deliveries" on public.advertising_agreement_deliveries;
 create policy "admins read agreement deliveries" on public.advertising_agreement_deliveries
   for select to authenticated using((select public.is_admin()));
 create policy "admins insert agreement deliveries" on public.advertising_agreement_deliveries

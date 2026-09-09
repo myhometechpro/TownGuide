@@ -9,6 +9,7 @@ comment on column public.businesses.listing_visibility is
   'directory = public profile and directory; advertiser_only = public profile reached from ads only; private = admin-only advertiser record';
 
 drop policy if exists "public reads active businesses" on public.businesses;
+drop policy if exists "public reads public business profiles" on public.businesses;
 create policy "public reads public business profiles" on public.businesses
   for select using(active and listing_visibility in ('directory','advertiser_only'));
 
