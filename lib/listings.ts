@@ -6,6 +6,7 @@ export function validLatitude(value:unknown):number|undefined{if(value===null||v
 export function validLongitude(value:unknown):number|undefined{if(value===null||value===undefined||String(value).trim()==="")return undefined;const number=Number(value);return Number.isFinite(number)&&number>=-180&&number<=180?number:undefined}
 export function validCoordinate(value:unknown):number|undefined{return validLongitude(value)}
 export function isPhysicalBusiness(business:Pick<Business,"locationType">){return (business.locationType||"physical")==="physical"}
+export function safeExternalUrl(value:unknown):string|undefined{const text=cleanOptional(value);if(!text)return undefined;const candidate=/^https?:\/\//i.test(text)?text:`https://${text}`;try{const url=new URL(candidate);return ["http:","https:"].includes(url.protocol)&&url.hostname.includes(".")?url.toString():undefined}catch{return undefined}}
 export function canMapBusiness(business:Business){return isPhysicalBusiness(business)&&!!cleanOptional(business.address)&&validLatitude(business.latitude)!==undefined&&validLongitude(business.longitude)!==undefined}
 
 export const lodgingTypes=["All","Cabins","Hotels","Vacation Rentals","RV","Camping"] as const;

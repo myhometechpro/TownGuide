@@ -43,7 +43,7 @@ Connect this GitHub repository in Netlify. `netlify.toml` supplies `npm run buil
 
 To enable inquiry notifications, configure `RESEND_API_KEY`, `INQUIRY_TO_EMAIL`, and `INQUIRY_FROM_EMAIL`. Configure `ZAPIER_INQUIRY_WEBHOOK_URL` with a Zapier Catch Hook URL to send every saved listing and advertising inquiry to Zapier. Notification failures are logged without customer details and do not roll back or duplicate the saved request.
 
-For updates, merge tested changes to the connected production branch. Netlify will build automatically. Run all unapplied migrations in numeric order before deploying code that depends on schema changes. Advertising agreement submissions require `supabase/migrations/015_advertising_agreement_delivery.sql`.
+For updates, merge tested changes to the connected production branch. Netlify will build automatically. Run all unapplied migrations in numeric order before deploying code that depends on schema changes. Advertising agreement submissions require migration 015; advertiser-only profiles and private advertiser records require migration 016.
 
 ## Production checklist
 

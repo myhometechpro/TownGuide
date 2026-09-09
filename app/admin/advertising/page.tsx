@@ -12,7 +12,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{saved?:
   const {db}=await requireAdmin();await db.rpc("refresh_ad_campaign_statuses");
   const [{data:productData},{data:businessData},{data:campaignData}]=await Promise.all([
     db.from("ad_products").select("*").order("price_cents"),
-    db.from("businesses").select("id,name,slug").eq("active",true).order("name"),
+    db.from("businesses").select("id,name,slug").order("name"),
     db.from("ad_campaigns").select("*,businesses(name,slug),ad_products(*),ad_events(count)").order("created_at",{ascending:false})
   ]);
   const products=(productData||[]) as AdProduct[],businesses=(businessData||[]) as Biz[],campaigns=(campaignData||[]) as AdCampaign[],notice=await searchParams,totals=campaigns.reduce((n,c)=>n+(c.ad_events?.[0]?.count||0),0);
