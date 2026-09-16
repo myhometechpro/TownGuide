@@ -3,6 +3,7 @@ import {getAdminSupabase} from "@/lib/supabase/admin";
 import {privateJson} from "@/lib/request-security";
 import {sendInquiryWebhook} from "@/lib/inquiry-webhook";
 import {RENTAL_AGREEMENT_TEXT,RENTAL_AGREEMENT_VERSION,splitList,validateRentalImages,validateRentalUrls} from "@/lib/vacation-rentals";
+import {sendVacationRentalPaymentLink} from "@/lib/vacation-rental-payment";
 
 export const runtime="nodejs";
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,8 +44,9 @@ export async function POST(request:Request){
     const key=process.env.STRIPE_SECRET_KEY;if(!key)return privateJson({ok:true,saved:true,message:"Your submission was saved. We will contact you with a secure payment link."});
     const headers={Authorization:`Bearer ${key}`,"Content-Type":"application/x-www-form-urlencoded"};
     const priceResponse=await fetch("https://api.stripe.com/v1/prices",{method:"POST",headers,body:new URLSearchParams({currency:"usd",unit_amount:String(product.price_cents),"product_data[name]":`${product.name} — ${propertyName}`}),cache:"no-store"}),price=await priceResponse.json() as {id?:string};if(!priceResponse.ok||!price.id)return privateJson({ok:true,saved:true,message:"Your submission was saved. We will contact you with a secure payment link."});
-    const linkResponse=await fetch("https://api.stripe.com/v1/payment_links",{method:"POST",headers,body:new URLSearchParams({"line_items[0][price]":price.id,"line_items[0][quantity]":"1","metadata[vacation_rental_order_id]":order.id,"metadata[vacation_rental_id]":rental.id,"restrictions[completed_sessions][limit]":"1",after_completion_type:"redirect","after_completion[redirect][url]":`${(process.env.NEXT_PUBLIC_SITE_URL||new URL(request.url).origin).replace(/\/+$/,"")}/vacation-rentals/thank-you?paid=1`}),cache:"no-store"}),link=await linkResponse.json() as {id?:string;url?:string};if(!linkResponse.ok||!link.id||!link.url)return privateJson({ok:true,saved:true,message:"Your submission was saved. We will contact you with a secure payment link."});
+    const linkResponse=await fetch("https://api.stripe.com/v1/payment_links",{method:"POST",headers,body:new URLSearchParams({"line_items[0][price]":price.id,"line_items[0][quantity]":"1","metadata[vacation_rental_order_id]":order.id,"metadata[vacation_rental_id]":rental.id,"restrictions[completed_sessions][limit]":"1","after_completion[type]":"redirect","after_completion[redirect][url]":`${(process.env.NEXT_PUBLIC_SITE_URL||new URL(request.url).origin).replace(/\/+$/,"")}/vacation-rentals/thank-you?paid=1`}),cache:"no-store"}),link=await linkResponse.json() as {id?:string;url?:string};if(!linkResponse.ok||!link.id||!link.url)return privateJson({ok:true,saved:true,message:"Your submission was saved. We will contact you with a secure payment link."});
     await db.from("vacation_rental_orders").update({stripe_payment_link_id:link.id,stripe_payment_link_url:link.url,updated_at:new Date().toISOString()}).eq("id",order.id);
+    await sendVacationRentalPaymentLink({email:ownerEmail,ownerName,propertyName,checkoutUrl:link.url,amountCents:product.price_cents});
     return privateJson({ok:true,checkoutUrl:link.url});
   }catch(error){console.error("Vacation rental submission failed",error);if(uploaded.length){const db=getAdminSupabase();await db?.storage.from("vacation-rental-images").remove(uploaded);}return NextResponse.json({error:"We could not complete the submission. Please try again."},{status:500});}
 }
