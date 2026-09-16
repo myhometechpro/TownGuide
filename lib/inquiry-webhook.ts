@@ -4,7 +4,7 @@ export type InquiryWebhookPayload = {
   category?: string;
   name: string;
   businessName?: string;
-  email: string;
+  email?: string;
   phone?: string;
   message?: string;
   submittedAt: string;
