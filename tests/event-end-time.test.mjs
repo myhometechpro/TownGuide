@@ -10,4 +10,6 @@ test("events persist and display an optional end time",()=>{
   assert.match(read("app/admin/content-actions.ts"),/end_time:String\(f\.get\("end_time"\)/);
   assert.match(read("lib/content.ts"),/endTime:r\.end_time\|\|undefined/);
   assert.match(read("components/cards.tsx"),/item\.endTime/);
+  assert.ok(read("components/cards.tsx").includes('return `${hour}:${String(minutes).padStart(2,"0")} ${suffix}`'));
+  assert.ok(read("components/cards.tsx").includes('`${start} - ${formatEventTime(item.endTime)}`'));
 });
