@@ -13,3 +13,9 @@ test("events persist and display an optional end time",()=>{
   assert.ok(read("components/cards.tsx").includes('return `${hour}:${String(minutes).padStart(2,"0")} ${suffix}`'));
   assert.ok(read("components/cards.tsx").includes('`${start} - ${formatEventTime(item.endTime)}`'));
 });
+
+test("the homepage displays upcoming events",()=>{
+  assert.match(read("app/page.tsx"),/getEvents\(\)/);
+  assert.match(read("app/page.tsx"),/<EventCard item=\{x\}/);
+  assert.match(read("app/page.tsx"),/upcomingEvents\.length/);
+});
